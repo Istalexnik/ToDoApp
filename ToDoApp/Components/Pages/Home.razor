@@ -1,0 +1,84 @@
+﻿@page "/"
+@inject Services.ToDoListService ToDoService
+@using Models
+
+<h3>To-Do List</h3>
+
+<div class="mb-3">
+    <input @bind="newTaskDescription" placeholder="Enter new task" class="form-control" />
+    <button @onclick="AddTaskAsync" class="btn btn-primary mt-2">Add Task</button>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var task in tasks)
+        {
+            <tr>
+                <td>@task.Id</td>
+                <td>@task.Description</td>
+                <td>@(task.IsComplete ? "Completed" : "Incomplete")</td>
+                <td>
+                    @if (!task.IsComplete)
+                    {
+                        <button @onclick="() => MarkTaskAsCompleteAsync(task.Id)" class="btn btn-success btn-sm">
+                            Mark as Complete
+                        </button>
+                    }
+                    else
+                    {
+                        <button @onclick="() => MarkTaskAsIncompleteAsync(task.Id)" class="btn btn-warning btn-sm">
+                            Mark as Incomplete
+                        </button>
+                    }
+                    <button @onclick="() => DeleteTaskAsync(task.Id)" class="btn btn-danger btn-sm">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<ToDoItem> tasks = new();
+    private string newTaskDescription = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tasks = await ToDoService.GetTasksAsync();
+    }
+
+    private async Task AddTaskAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(newTaskDescription))
+        {
+            await ToDoService.AddTaskAsync(newTaskDescription);
+            tasks = await ToDoService.GetTasksAsync();
+            newTaskDescription = string.Empty;
+        }
+    }
+
+    private async Task MarkTaskAsCompleteAsync(int id)
+    {
+        await ToDoService.MarkTaskAsCompleteAsync(id);
+        tasks = await ToDoService.GetTasksAsync();
+    }
+
+    private async Task MarkTaskAsIncompleteAsync(int id)
+    {
+        await ToDoService.MarkTaskAsIncompleteAsync(id);
+        tasks = await ToDoService.GetTasksAsync();
+    }
+
+    private async Task DeleteTaskAsync(int id)
+    {
+        await ToDoService.DeleteTaskAsync(id);
+        tasks = await ToDoService.GetTasksAsync();
+    }
+}
