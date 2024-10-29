@@ -1,0 +1,32 @@
+﻿@page "/create-todo"
+@using ToDoApp.Models
+@inject ToDoApp.Services.ToDoService ToDoService
+@inject NavigationManager NavigationManager
+
+<h3>Create New To-Do</h3>
+
+<div class="form-group">
+    <label>Description</label>
+    <input @bind="newToDo.Description" class="form-control" placeholder="Enter description" />
+</div>
+
+<button @onclick="SaveToDoAsync" class="btn btn-primary">Save</button>
+<button @onclick="NavigateBack" class="btn btn-secondary ml-2">Back</button>
+
+@code {
+    private ToDoItem newToDo = new ToDoItem();
+
+    private async Task SaveToDoAsync()
+    {
+        // Call the service to add a new to-do
+        await ToDoService.AddToDoAsync(newToDo.Description);
+
+        // Navigate back to the to-do list after saving
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

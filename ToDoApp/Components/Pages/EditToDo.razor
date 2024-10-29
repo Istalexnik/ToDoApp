@@ -1,0 +1,57 @@
+﻿@page "/edit-todo/{id:int}"
+@inject ToDoApp.Services.ToDoService ToDoService
+@inject NavigationManager NavigationManager
+@using ToDoApp.Models
+
+<h3>Edit To-Do</h3>
+
+@if (toDo != null)
+{
+    <div class="form-group">
+        <label>Description</label>
+        <input @bind="toDo.Description" class="form-control" />
+    </div>
+
+    <button @onclick="SaveToDoAsync" class="btn btn-primary">Save</button>
+    <button @onclick="NavigateBack" class="btn btn-secondary ml-2">Back</button>
+}
+else
+{
+    <p>Loading to-do...</p>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; } // ID of the to-do item to edit
+
+    private ToDoItem? toDo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the to-do item by its ID
+        toDo = (await ToDoService.GetAllToDosAsync()).FirstOrDefault(t => t.Id == id);
+
+        if (toDo == null)
+        {
+            // Navigate back if to-do item is not found
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task SaveToDoAsync()
+    {
+        if (toDo != null)
+        {
+            // Update only the description using ToDoService
+            await ToDoService.UpdateToDoAsync(toDo.Id, toDo.Description, toDo.IsComplete);
+
+            // Navigate back to the to-do list
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

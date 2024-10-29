@@ -1,139 +1,76 @@
 ﻿@page "/"
-@inject Services.ToDoListService ToDoService
-@using Models
+@using ToDoApp.Models
+@inject ToDoApp.Services.ToDoService ToDoService
+@inject NavigationManager NavigationManager
 
 <h3>To-Do List</h3>
 
-<div class="mb-3">
-    <input @bind="newTaskDescription" placeholder="Enter new task" class="form-control" />
-    <button @onclick="AddTaskAsync" class="btn btn-primary mt-2">Add Task</button>
-</div>
+<button @onclick="CreateNewToDo" class="btn btn-primary mb-3">Add New To-Do</button>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var task in tasks)
-        {
+@if (todos != null && todos.Any())
+{
+    <table class="table">
+        <thead>
             <tr>
-                <td>@task.Id</td>
-                <td>
-                    @if (editingTaskId == task.Id)
-                    {
-                        <!-- Input field for editing description -->
-                        <input type="text" value="@editingDescription"
-                               @oninput="e => editingDescription = e.Value?.ToString() ?? string.Empty"
-                               @onkeypress="async e => await HandleKeyPress(e)"
-                               @onblur="async () => await HandleBlur(task.Id)"
-                               class="form-control" />
-
-                    }
-                    else
-                    {
-                        <!-- Clickable description text -->
-                        <span @onclick="() => EditTaskDescription(task.Id, task.Description)" style="cursor: pointer;">
-                            @task.Description
-                        </span>
-                    }
-                </td>
-                <td>@(task.IsComplete ? "Completed" : "Incomplete")</td>
-                <td>
-                    @if (!task.IsComplete)
-                    {
-                        <button @onclick="() => MarkTaskAsCompleteAsync(task.Id)" class="btn btn-success btn-sm">
-                            Mark as Complete
-                        </button>
-                    }
-                    else
-                    {
-                        <button @onclick="() => MarkTaskAsIncompleteAsync(task.Id)" class="btn btn-warning btn-sm">
-                            Mark as Incomplete
-                        </button>
-                    }
-
-                    <button @onclick="() => DeleteTaskAsync(task.Id)" class="btn btn-danger btn-sm">Delete</button>
-                </td>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var todo in todos)
+            {
+                <tr>
+                    <td>@todo.Description</td>
+                    <td>@(todo.IsComplete ? "Completed" : "Incomplete")</td>
+                    <td>
+                        <button @onclick="() => ToggleCompleteAsync(todo)" class="btn btn-sm @(todo.IsComplete ? "btn-warning" : "btn-success")">
+                            @(todo.IsComplete ? "Mark as Incomplete" : "Mark as Complete")
+                        </button>
+                        <button @onclick="() => EditToDo(todo.Id)" class="btn btn-info btn-sm">Edit</button>
+                        <button @onclick="() => DeleteToDoAsync(todo.Id)" class="btn btn-danger btn-sm">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No to-dos available.</p>
+}
 
 @code {
-    private List<ToDoItem> tasks = new();
-    private string newTaskDescription = string.Empty;
-
-    private int? editingTaskId = null; // Track the task being edited
-    private string editingDescription = string.Empty; // Store the new description for editing
-    private bool hasSaved = false; // Prevent duplicate saves on Enter and Blur
+    private List<ToDoItem> todos = new();
 
     protected override async Task OnInitializedAsync()
     {
-        tasks = await ToDoService.GetTasksAsync();
+        todos = await ToDoService.GetAllToDosAsync();
     }
 
-    private async Task AddTaskAsync()
+    private async Task ToggleCompleteAsync(ToDoItem todo)
     {
-        if (!string.IsNullOrWhiteSpace(newTaskDescription))
-        {
-            await ToDoService.AddTaskAsync(newTaskDescription);
-            tasks = await ToDoService.GetTasksAsync();
-            newTaskDescription = string.Empty;
-        }
+        // Toggle the completion status
+        todo.IsComplete = !todo.IsComplete;
+        await ToDoService.UpdateToDoAsync(todo.Id, todo.Description, todo.IsComplete);
+
+        // Reload the list to reflect the changes
+        todos = await ToDoService.GetAllToDosAsync();
     }
 
-    private async Task MarkTaskAsCompleteAsync(int id)
+    private async Task DeleteToDoAsync(int id)
     {
-        await ToDoService.MarkTaskAsCompleteAsync(id);
-        tasks = await ToDoService.GetTasksAsync();
+        await ToDoService.DeleteToDoAsync(id);
+        todos = await ToDoService.GetAllToDosAsync();
     }
 
-    private async Task MarkTaskAsIncompleteAsync(int id)
+    private void CreateNewToDo()
     {
-        await ToDoService.MarkTaskAsIncompleteAsync(id);
-        tasks = await ToDoService.GetTasksAsync();
+        NavigationManager.NavigateTo("/create-todo");
     }
 
-    private async Task DeleteTaskAsync(int id)
+    private void EditToDo(int id)
     {
-        await ToDoService.DeleteTaskAsync(id);
-        tasks = await ToDoService.GetTasksAsync();
-    }
-
-    private void EditTaskDescription(int id, string currentDescription)
-    {
-        editingTaskId = id;
-        editingDescription = currentDescription;
-        hasSaved = false; // Reset the save flag for new edit session
-    }
-
-    private async Task SaveTaskDescriptionAsync(int id)
-    {
-        if (editingTaskId != null && !hasSaved)
-        {
-            hasSaved = true; // Set flag to avoid double save
-            await ToDoService.UpdateTaskDescriptionAsync(id, editingDescription);
-            tasks = await ToDoService.GetTasksAsync();
-            editingTaskId = null;
-            editingDescription = string.Empty;
-        }
-    }
-
-    private async Task HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && editingTaskId != null)
-        {
-            await SaveTaskDescriptionAsync(editingTaskId.Value);
-        }
-    }
-
-    private async Task HandleBlur(int id)
-    {
-        await SaveTaskDescriptionAsync(id);
+        NavigationManager.NavigateTo($"/edit-todo/{id}");
     }
 }
