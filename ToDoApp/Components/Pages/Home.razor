@@ -23,7 +23,25 @@
         {
             <tr>
                 <td>@task.Id</td>
-                <td>@task.Description</td>
+                <td>
+                    @if (editingTaskId == task.Id)
+                    {
+                        <!-- Input field for editing description -->
+                        <input type="text" value="@editingDescription"
+                               @oninput="e => editingDescription = e.Value?.ToString() ?? string.Empty"
+                               @onkeypress="async e => await HandleKeyPress(e)"
+                               @onblur="async () => await HandleBlur(task.Id)"
+                               class="form-control" />
+
+                    }
+                    else
+                    {
+                        <!-- Clickable description text -->
+                        <span @onclick="() => EditTaskDescription(task.Id, task.Description)" style="cursor: pointer;">
+                            @task.Description
+                        </span>
+                    }
+                </td>
                 <td>@(task.IsComplete ? "Completed" : "Incomplete")</td>
                 <td>
                     @if (!task.IsComplete)
@@ -38,6 +56,7 @@
                             Mark as Incomplete
                         </button>
                     }
+
                     <button @onclick="() => DeleteTaskAsync(task.Id)" class="btn btn-danger btn-sm">Delete</button>
                 </td>
             </tr>
@@ -48,6 +67,10 @@
 @code {
     private List<ToDoItem> tasks = new();
     private string newTaskDescription = string.Empty;
+
+    private int? editingTaskId = null; // Track the task being edited
+    private string editingDescription = string.Empty; // Store the new description for editing
+    private bool hasSaved = false; // Prevent duplicate saves on Enter and Blur
 
     protected override async Task OnInitializedAsync()
     {
@@ -80,5 +103,37 @@
     {
         await ToDoService.DeleteTaskAsync(id);
         tasks = await ToDoService.GetTasksAsync();
+    }
+
+    private void EditTaskDescription(int id, string currentDescription)
+    {
+        editingTaskId = id;
+        editingDescription = currentDescription;
+        hasSaved = false; // Reset the save flag for new edit session
+    }
+
+    private async Task SaveTaskDescriptionAsync(int id)
+    {
+        if (editingTaskId != null && !hasSaved)
+        {
+            hasSaved = true; // Set flag to avoid double save
+            await ToDoService.UpdateTaskDescriptionAsync(id, editingDescription);
+            tasks = await ToDoService.GetTasksAsync();
+            editingTaskId = null;
+            editingDescription = string.Empty;
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && editingTaskId != null)
+        {
+            await SaveTaskDescriptionAsync(editingTaskId.Value);
+        }
+    }
+
+    private async Task HandleBlur(int id)
+    {
+        await SaveTaskDescriptionAsync(id);
     }
 }

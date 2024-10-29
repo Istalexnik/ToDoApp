@@ -106,4 +106,18 @@ public class ToDoListService
 
         await command.ExecuteNonQueryAsync();
     }
+
+    public async Task UpdateTaskDescriptionAsync(int id, string newDescription)
+    {
+        using var connection = new SqliteConnection($"Data Source={dbPath}");
+        await connection.OpenAsync();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "UPDATE ToDoItems SET Description = $description WHERE Id = $id";
+        command.Parameters.AddWithValue("$description", newDescription);
+        command.Parameters.AddWithValue("$id", id);
+
+        await command.ExecuteNonQueryAsync();
+    }
+
 }
