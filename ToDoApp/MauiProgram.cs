@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using ToDoApp.Data;
-using ToDoApp.Services;
 
 namespace ToDoApp
 {
@@ -23,7 +22,6 @@ namespace ToDoApp
     		builder.Logging.AddDebug();
 #endif
             builder.Services.AddSingleton<ToDoRepository>();
-            builder.Services.AddSingleton<ToDoService>();
 
             return builder.Build();
         }

@@ -1,6 +1,6 @@
 ﻿@page "/create-todo"
 @using ToDoApp.Models
-@inject ToDoApp.Services.ToDoService ToDoService
+@inject ToDoApp.Data.ToDoRepository ToDoRepository
 @inject NavigationManager NavigationManager
 
 <h3>Create New To-Do</h3>
@@ -18,8 +18,8 @@
 
     private async Task SaveToDoAsync()
     {
-        // Call the service to add a new to-do
-        await ToDoService.AddToDoAsync(newToDo.Description);
+        // Call the repository to add a new to-do
+        await ToDoRepository.AddToDoAsync(newToDo);
 
         // Navigate back to the to-do list after saving
         NavigationManager.NavigateTo("/");

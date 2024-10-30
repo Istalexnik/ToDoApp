@@ -1,6 +1,6 @@
 ﻿@page "/"
 @using ToDoApp.Models
-@inject ToDoApp.Services.ToDoService ToDoService
+@inject ToDoApp.Data.ToDoRepository ToDoRepository
 @inject NavigationManager NavigationManager
 
 <h3>To-Do List</h3>
@@ -45,23 +45,23 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        todos = await ToDoService.GetAllToDosAsync();
+        todos = await ToDoRepository.GetToDosAsync();
     }
 
     private async Task ToggleCompleteAsync(ToDoItem todo)
     {
         // Toggle the completion status
         todo.IsComplete = !todo.IsComplete;
-        await ToDoService.UpdateToDoAsync(todo.Id, todo.Description, todo.IsComplete);
+        await ToDoRepository.UpdateToDoAsync(todo);
 
         // Reload the list to reflect the changes
-        todos = await ToDoService.GetAllToDosAsync();
+        todos = await ToDoRepository.GetToDosAsync();
     }
 
     private async Task DeleteToDoAsync(int id)
     {
-        await ToDoService.DeleteToDoAsync(id);
-        todos = await ToDoService.GetAllToDosAsync();
+        await ToDoRepository.DeleteToDoAsync(id);
+        todos = await ToDoRepository.GetToDosAsync();
     }
 
     private void CreateNewToDo()
