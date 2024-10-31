@@ -1,5 +1,5 @@
 ﻿@page "/edit-todo/{id:int}"
-@inject ToDoApp.Data.ToDoRepository ToDoRepository
+@inject ToDoApp.Services.ToDoService ToDoService
 @inject NavigationManager NavigationManager
 @using ToDoApp.Models
 
@@ -29,7 +29,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         // Fetch the to-do item by its ID
-        toDo = (await ToDoRepository.GetToDosAsync()).FirstOrDefault(t => t.Id == id);
+        toDo = (await ToDoService.GetAllToDosAsync()).FirstOrDefault(t => t.Id == id);
 
         if (toDo == null)
         {
@@ -42,8 +42,8 @@ else
     {
         if (toDo != null)
         {
-            // Update the to-do item using ToDoRepository
-            await ToDoRepository.UpdateToDoAsync(toDo);
+            // Update only the description using ToDoService
+            await ToDoService.UpdateToDoAsync(toDo.Id, toDo.Description, toDo.IsComplete);
 
             // Navigate back to the to-do list
             NavigationManager.NavigateTo("/");

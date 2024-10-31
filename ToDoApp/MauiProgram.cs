@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using ToDoApp.Data;
+using ToDoApp.Services;
+
 
 namespace ToDoApp
 {
@@ -21,7 +23,9 @@ namespace ToDoApp
     		builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
+            builder.Services.AddSingleton<ToDoService>();
             builder.Services.AddSingleton<ToDoRepository>();
+
 
             return builder.Build();
         }
